@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <title>Обработка адресов</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; }
+        .upload-section, .filter-section { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input[type="file"], input[type="text"], input[type="number"], select {
+            width: 100%; max-width: 300px; padding: 10px; border: 2px solid #ddd; border-radius: 5px;
+        }
+        button { background: #007bff; color: white; padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #0056b3; }
+        .operation-buttons { text-align: center; margin: 20px 0; }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6268; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f8f9fa; font-weight: bold; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .alert { padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .stats { display: flex; gap: 20px; margin: 20px 0; }
+        .stat-card { background: #e9ecef; padding: 15px; border-radius: 8px; text-align: center; flex: 1; }
+        .home-btn {
+            position: fixed;
+            top: 40px;
+            left: 40px;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            text-decoration: none;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .home-btn:hover {
+            transform: translateY(-5px) scale(1.1);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.6);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .home-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+                top: 15px;
+                left: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<a href="/" class="home-btn">
+    <i class="bi bi-house-door-fill"></i>
+</a>
+
+<div class="container" id="container">
+
+    <h1>🏠 Работа с адресами зданий</h1>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <!-- Загрузка файла -->
+    <div class="upload-section">
+        <h3>📁 Загрузить файл с адресами</h3>
+        <p>Формат: <code>микрорайон;улица;номер_дома;год_постройки</code></p>
+        <form method="post" action="/api/addresses/upload" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>Выберите CSV файл:</label>
+                <input type="file" name="file" accept=".txt,.csv" required>
+            </div>
+            <button type="submit" class="btn-success">Загрузить</button>
+        </form>
+    </div>
+
+    <!-- Форма добавления дома -->
+    <div class="add-house-section mt-4 p-4 border rounded bg-light">
+        <h4>➕ Добавить новый дом</h4>
+        <form method="post" action="/api/addresses/add" th:object="${addressForm}">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Микрорайон</label>
+                    <input type="text" class="form-control" th:field="*{district}"
+                           placeholder="Центр" required maxlength="50">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Улица</label>
+                    <input type="text" class="form-control" th:field="*{street}"
+                           placeholder="Ленина" required maxlength="50">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Дом</label>
+                    <input type="text" class="form-control" th:field="*{houseNumber}"
+                           placeholder="15" required maxlength="10">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Год</label>
+                    <input type="number" class="form-control" th:field="*{year}"
+                           min="1800" max="2025" placeholder="2000" required>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-plus-circle"></i> Добавить
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div th:if="${addresses != null and not #lists.isEmpty(addresses)}">
+
+        <!-- Таблица -->
+        <table>
+            <thead>
+            <tr>
+                <th>Микрорайон</th>
+                <th>Улица</th>
+                <th>Дом</th>
+                <th>Год постройки</th>
+                <th>Возраст</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr id="addresses" th:each="addr : ${addresses}">
+                <td th:text="${addr.district}"></td>
+                <td th:text="${addr.street}"></td>
+                <td th:text="${addr.houseNumber}"></td>
+                <td th:text="${addr.year}"></td>
+                <td th:text="${2025 - addr.year} + ' лет'"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div th:if="${addresses != null and not #lists.isEmpty(addresses)}" class="operation-buttons">
+        <button class="operation-btn" onclick="getOldBuildings()">Вывести самые старые здания</button>
+        <button class="operation-btn" onclick="sort('DESC')">📉 Сортировка по убыванию</button>
+        <button class="operation-btn" onclick="sort('ASC')">📈 Сортировка по возрастанию</button>
+    </div>
+
+    <div th:if="${groupedOldBuildings != null}">
+        <table>
+            <thead>
+            <tr>
+                <th>Микрорайон</th>
+                <th>Данные</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            <tr th:each="entry : ${groupedOldBuildings}">
+                <td colspan="${entry.value.size()}">
+                    <span th:text="${entry.key}"></span>
+                </td>
+                <td>
+                    <table th:if="${entry.value.size() != 0}">
+                        <thead>
+                            <tr>
+                                <th>Улица</th>
+                                <th>Дом</th>
+                                <th>Год постройки</th>
+                                <th>Возраст (лет)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="building : ${entry.value}">
+                                <td th:text="${building.street}"></td>
+                                <td th:text="${building.houseNumber}"></td>
+                                <td th:text="${building.year}"></td>
+                                <td th:text="${2025 - building.year}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div th:unless="${entry.value.size() != 0}">
+                        В микрорайоне нет старейших зданий
+                    </div>
+                </td>
+            </tr>
+
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+        const API_BASE = 'http://localhost:8090/api/addresses';
+
+        function clearFilter() {
+            document.querySelectorAll('input').forEach(input => input.value = '');
+            document.querySelector('form').submit();
+        }
+
+        function getDataFromTable() {
+            let addresses = [];
+
+            document.querySelectorAll('#addresses').forEach(function(row) {
+                var district = row.cells[0].textContent;
+                var street = row.cells[1].textContent;
+                var houseNumber = row.cells[2].textContent;
+                var year = row.cells[3].textContent;
+
+                addresses.push({
+                    district: district,
+                    street: street,
+                    houseNumber: houseNumber,
+                    year: year
+                });
+            });
+
+            return addresses;
+        }
+
+        function getOldBuildings() {
+
+            let addresses = getDataFromTable();
+
+            sendRequest('GET', addresses, "old")
+                .then(response => response.text())
+                .then(data => {
+                    document.open();
+                    document.write(data);
+                    document.close();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+
+        }
+
+        function sort(order) {
+            let addresses = getDataFromTable();
+
+            sendRequest('GET', addresses, "sort", { order: order })
+                .then(response => response.text())
+                .then(data => {
+                    document.open();
+                    document.write(data);
+                    document.close();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+
+        }
+
+        async function sendRequest(method, data, endpoint, params) {
+            try {
+                let url = params ? `${API_BASE}/${endpoint}?${new URLSearchParams(params)}` : `${API_BASE}/${endpoint}`;
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+<!--                    body: JSON.stringify({ data })-->
+                });
+
+                return response;
+
+            } catch (error) {
+               console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>
