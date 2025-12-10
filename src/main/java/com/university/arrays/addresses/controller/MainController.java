@@ -1,4 +1,4 @@
-package com.university.arrays.controller;
+package com.university.arrays.addresses.controller;
 
 import com.university.arrays.addresses.dto.Address;
 import org.springframework.stereotype.Controller;
@@ -25,7 +25,6 @@ public class MainController {
 
     @GetMapping("/addresses")
     public String addresses(Model model) {
-//        model.addAttribute("addresses", addresses);
         model.addAttribute("addressForm", new Address());
         return "addresses";
     }

@@ -70,10 +70,6 @@
 </head>
 <body>
 
-<a href="/" class="home-btn">
-    <i class="bi bi-house-door-fill"></i>
-</a>
-
 <div class="container" id="container">
 
     <h1>🏠 Работа с адресами зданий</h1>
@@ -99,27 +95,27 @@
         <h4>➕ Добавить новый дом</h4>
         <form method="post" action="/api/addresses/add" th:object="${addressForm}">
             <div class="row g-3">
-                <div class="col-md-3">
+                <div style="margin-top: 8px" class="col-md-3">
                     <label class="form-label">Микрорайон</label>
                     <input type="text" class="form-control" th:field="*{district}"
                            placeholder="Центр" required maxlength="50">
                 </div>
-                <div class="col-md-3">
+                <div style="margin-top: 8px" class="col-md-3">
                     <label class="form-label">Улица</label>
                     <input type="text" class="form-control" th:field="*{street}"
                            placeholder="Ленина" required maxlength="50">
                 </div>
-                <div class="col-md-2">
+                <div style="margin-top: 8px" class="col-md-2">
                     <label class="form-label">Дом</label>
                     <input type="text" class="form-control" th:field="*{houseNumber}"
                            placeholder="15" required maxlength="10">
                 </div>
-                <div class="col-md-2">
+                <div style="margin-top: 8px" class="col-md-2">
                     <label class="form-label">Год</label>
                     <input type="number" class="form-control" th:field="*{year}"
                            min="1800" max="2025" placeholder="2000" required>
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
+                <div style="margin-top: 8px" class="col-md-2 d-flex align-items-end">
                     <button type="submit" class="btn btn-success w-100">
                         <i class="bi bi-plus-circle"></i> Добавить
                     </button>
@@ -138,7 +134,7 @@
                 <th>Улица</th>
                 <th>Дом</th>
                 <th>Год постройки</th>
-                <th>Возраст</th>
+                <th>Возраст (лет)</th>
             </tr>
             </thead>
             <tbody>
@@ -147,7 +143,7 @@
                 <td th:text="${addr.street}"></td>
                 <td th:text="${addr.houseNumber}"></td>
                 <td th:text="${addr.year}"></td>
-                <td th:text="${2025 - addr.year} + ' лет'"></td>
+                <td th:text="${2025 - addr.year}"></td>
             </tr>
             </tbody>
         </table>
@@ -206,36 +202,9 @@
 <script>
         const API_BASE = 'http://localhost:8090/api/addresses';
 
-        function clearFilter() {
-            document.querySelectorAll('input').forEach(input => input.value = '');
-            document.querySelector('form').submit();
-        }
-
-        function getDataFromTable() {
-            let addresses = [];
-
-            document.querySelectorAll('#addresses').forEach(function(row) {
-                var district = row.cells[0].textContent;
-                var street = row.cells[1].textContent;
-                var houseNumber = row.cells[2].textContent;
-                var year = row.cells[3].textContent;
-
-                addresses.push({
-                    district: district,
-                    street: street,
-                    houseNumber: houseNumber,
-                    year: year
-                });
-            });
-
-            return addresses;
-        }
-
         function getOldBuildings() {
 
-            let addresses = getDataFromTable();
-
-            sendRequest('GET', addresses, "old")
+            sendRequest('GET', "old")
                 .then(response => response.text())
                 .then(data => {
                     document.open();
@@ -249,9 +218,8 @@
         }
 
         function sort(order) {
-            let addresses = getDataFromTable();
 
-            sendRequest('GET', addresses, "sort", { order: order })
+            sendRequest('GET', "sort", { order: order })
                 .then(response => response.text())
                 .then(data => {
                     document.open();
@@ -264,14 +232,13 @@
 
         }
 
-        async function sendRequest(method, data, endpoint, params) {
+        async function sendRequest(method, endpoint, params) {
             try {
                 let url = params ? `${API_BASE}/${endpoint}?${new URLSearchParams(params)}` : `${API_BASE}/${endpoint}`;
 
                 const response = await fetch(url, {
                     method: method,
                     headers: { 'Content-Type': 'application/json' },
-<!--                    body: JSON.stringify({ data })-->
                 });
 
                 return response;

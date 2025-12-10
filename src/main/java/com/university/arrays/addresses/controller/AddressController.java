@@ -1,8 +1,9 @@
 package com.university.arrays.addresses.controller;
 
 import com.university.arrays.addresses.dto.Address;
-import com.university.arrays.addresses.dto.AddressesRq;
 import com.university.arrays.addresses.service.AddressService;
+import com.university.arrays.addresses.service.SortService;
+import com.university.arrays.addresses.service.ValidateService;
 import com.university.arrays.enums.SortOrder;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
@@ -11,10 +12,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.ui.Model;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -24,17 +23,16 @@ public class AddressController {
 
     @Autowired
     private AddressService addressService;
+    @Autowired
+    private SortService sortService;
+    @Autowired
+    private ValidateService validateService;
 
     @PostMapping("/upload")
     public String uploadFile(@RequestParam("file") MultipartFile file, HttpSession session,
                             RedirectAttributes redirectAttributes) {
         try {
-            ArrayList<Address> addresses = (ArrayList<Address>) session.getAttribute("addresses");
-            if (addresses == null) {
-                addresses = new ArrayList<>();
-            }
-            List<Address> newAddresses = addressService.parseAddressesFromFile(file);
-            addresses.addAll(newAddresses);
+            ArrayList<Address> addresses = addressService.parseAddressesFromFile(file);
 
             session.setAttribute("addresses", addresses);
             redirectAttributes.addFlashAttribute("success", "Файл успешно загружен!");
@@ -55,15 +53,9 @@ public class AddressController {
             session.setAttribute("addresses", addresses);
         }
 
-        if (newAddress.getDistrict() == null || newAddress.getDistrict().trim().isEmpty() ||
-                newAddress.getYear() < 1800 || newAddress.getYear() > 2025) {
-            redirectAttributes.addFlashAttribute("error", "Заполните все поля корректно!");
-            return "redirect:/addresses";
-        }
+        addresses.add(addressService.trimAddress(newAddress));
 
-        addresses = addressService.addBuilding(addresses, newAddress);
-
-        redirectAttributes.addFlashAttribute("success", "🏠 Дом добавлен!");
+        redirectAttributes.addFlashAttribute("success", "Дом добавлен!");
         redirectAttributes.addFlashAttribute("addresses", addresses);
         return "redirect:/addresses";
     }
@@ -73,8 +65,8 @@ public class AddressController {
     public String getOldBuildings(HttpSession session, RedirectAttributes redirectAttributes) {
         try {
             ArrayList<Address> addresses = (ArrayList<Address>) session.getAttribute("addresses");
-            log.info("Data: {}", addresses);
-            Map<String, ArrayList<Address>> groupedOldBuildings = addressService.getOldBuildings(addresses);
+
+            Map<String, ArrayList<Address>> groupedOldBuildings = addressService.getGroupedAddressesByDistrict(addresses);
 
             redirectAttributes.addFlashAttribute("success", "Старые здания выведены");
             redirectAttributes.addFlashAttribute("addresses", addresses);
@@ -86,11 +78,13 @@ public class AddressController {
     }
 
     @GetMapping("/sort")
-    public String sort(HttpSession session,
+    public String getSortedAddresses(HttpSession session,
                        @RequestParam("order") SortOrder order, RedirectAttributes redirectAttributes) {
         try {
             ArrayList<Address> addresses = (ArrayList<Address>) session.getAttribute("addresses");
-            ArrayList<Address> sortedAddresses = addressService.getSortedAddresses(addresses, order);
+
+            log.info("Начата ортировка адресов по году, порядок: {}", order.name());
+            ArrayList<Address> sortedAddresses = sortService.sort(addresses, order);
 
             redirectAttributes.addFlashAttribute("success", "Сортировка по " + (order == SortOrder.ASC ? "возрастанию" : "убыванию") + " успешно произведена");
             redirectAttributes.addFlashAttribute("addresses", sortedAddresses);

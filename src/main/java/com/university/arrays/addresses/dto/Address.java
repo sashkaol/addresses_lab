@@ -1,12 +1,29 @@
 package com.university.arrays.addresses.dto;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+
 public class Address {
+
+    @Valid
+    @NotNull
     private String district;
+
+    @Valid
+    @NotNull
     private String street;
+
+    @Valid
+    @NotNull
     private String houseNumber;
+
+    @Valid
+    @Min(value = 1800)
+    @Max(value = 2025)
     private int year;
 
-    // Конструктор
     public Address() {}
     public Address(String district, String street, String houseNumber, int year) {
         this.district = district;
@@ -15,7 +32,6 @@ public class Address {
         this.year = year;
     }
 
-    // Getters/Setters
     public String getDistrict() { return district; }
     public void setDistrict(String district) { this.district = district; }
 
