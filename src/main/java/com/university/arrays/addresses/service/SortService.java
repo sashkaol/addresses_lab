@@ -35,7 +35,7 @@ public class SortService {
         return i + 1;
     }
 
-    private static void swap(ArrayList<Address> addresses, int i, int j) {
+    private void swap(ArrayList<Address> addresses, int i, int j) {
         Address temp = addresses.get(i);
         addresses.set(i, addresses.get(j));
         addresses.set(j, temp);
